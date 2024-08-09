@@ -1,0 +1,97 @@
+---
+title: "Mustn1 tissue panel (human)"
+author: "Serge Ducommun"
+date: "2023-12-17"
+output: html_document
+---
+## Generate plot for human tissue panel
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Load required libraries and functions
+
+```{r libraries, message=FALSE}
+library(tidyverse)
+library(DBI)
+library(RMySQL)
+source("../general_functions.R")
+```
+
+Connect to GTEx server
+```{r connect}
+db = dbConnect(RMySQL::MySQL(), 
+               host = "genome-mysql.cse.ucsc.edu",
+               user = "genome",
+               password = "",
+               dbname = "hgFixed")
+```
+
+Download data from GTEx
+```{sql download, connection=db, output.var="df"}
+SELECT geneid, sample, tissue, score FROM gtexSampleDataV8 WHERE geneId="ENSG00000272573.5"
+```
+
+Disconnect database
+```{r disconnect}
+dbDisconnect(db)
+```
+
+Clean up data (split into group and subgroup, select group sof interest, then rename)
+```{r sequence}
+df <- df %>% 
+  separate(tissue, c("tissue_group", "sub_tissue"), sep = "(?<=.)(?=[A-Z])", remove = FALSE) %>%
+  group_by(tissue_group) %>%
+  filter(tissue_group != "brain", tissue_group != "esophagus", tissue_group != "skin", tissue_group != "breast"
+         , tissue_group != "ectocervix", tissue_group != "endocervix", tissue_group != "fallopian", tissue_group != "minor"
+         , tissue_group != "ovary", tissue_group != "pituitary", tissue_group != "prostate", tissue_group != "testis"
+         , tissue_group != "thyroid", tissue_group != "vagina", tissue_group != "whole"
+         , tissue_group != "xformedfibroblasts", tissue_group != "xformedlymphocytes", tissue_group != "adrenal") %>%
+  mutate(tissue2 = tissue) %>%
+  mutate(tissue2 = replace(tissue2, tissue == "arteryTibial", "Tibial artery")) %>%
+  mutate(tissue2 = replace(tissue2, tissue == "arteryCoronary", "Coronary artery")) %>%
+  mutate(tissue2 = replace(tissue2, tissue == "muscleSkeletal", "Skeletal Muscle")) %>%
+  mutate(tissue2 = replace(tissue2, tissue == "nerveTibial", "Tibial nerve")) %>%
+  mutate(tissue2 = replace(tissue2, tissue == "adiposeSubcut", "Adipose tissue")) %>%
+  mutate(tissue2 = replace(tissue2, tissue == "arteryAorta", "Aorta")) %>%
+  mutate(tissue2 = replace(tissue2, tissue == "uterus", "Uterus")) %>%
+  mutate(tissue2 = replace(tissue2, tissue == "heartAtrialAppend", "Heart")) %>%
+  mutate(tissue2 = replace(tissue2, tissue == "bladder", "Bladder")) %>%
+  mutate(tissue2 = replace(tissue2, tissue == "adiposeVisceral", "Adipose tissue")) %>%
+  mutate(tissue2 = replace(tissue2, tissue == "lung", "Lung")) %>%
+  mutate(tissue2 = replace(tissue2, tissue == "smallIntestine", "Small Intestine")) %>%
+  mutate(tissue2 = replace(tissue2, tissue == "heartLeftVentricl", "Heart")) %>%
+  mutate(tissue2 = replace(tissue2, tissue == "colonTransverse", "Colon")) %>%
+  mutate(tissue2 = replace(tissue2, tissue == "colonSigmoid", "Colon")) %>%
+  mutate(tissue2 = replace(tissue2, tissue == "spleen", "Spleen")) %>%
+  mutate(tissue2 = replace(tissue2, tissue == "stomach", "Stomach")) %>%
+  mutate(tissue2 = replace(tissue2, tissue == "kidneyMedulla", "Kidney")) %>%
+  mutate(tissue2 = replace(tissue2, tissue == "kidneyCortex", "Kidney")) %>%
+  mutate(tissue2 = replace(tissue2, tissue == "liver", "Liver")) %>%
+  mutate(tissue2 = replace(tissue2, tissue == "pancreas", "Pancreas"))
+```
+
+Plot
+```{r plot}
+df %>% 
+  ggplot(aes(reorder(tissue2, score, decreasing = TRUE), score)) +
+  geom_violin(scale="width", colour = "#000000", fill = "#3182BD", alpha = 1, draw_quantiles = c(0.5)) +
+  geom_jitter(height = 0, width = 0.3, size=0, alpha=0) +
+  default_theme() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_y_continuous(limits = c(0,5000), expand = c(0, 0)) +
+  xlab("") + ylab("MUSTN1 expression\nRPKM") + ggtitle("Human tissues", subtitle="(GTEx v8)") 
+
+```
+
+Save plot
+```{r save}
+ggsave_fixed("Fig1_HumanPanel_no_dots.pdf", plot_height = 5, plot_width = 8.5, height = 10, width = 11)
+```
+
+<details><summary>Session Information:</summary>
+```{r session}
+sessionInfo()
+```
+</details>

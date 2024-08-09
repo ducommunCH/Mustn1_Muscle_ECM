@@ -1,0 +1,39 @@
+---
+title: "ggmsa of Mustn1"
+author: "Serge Ducommun"
+date: "2023-12-17"
+output: html_document
+---
+## Generate multiple sequence alignment
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Load required libraries
+
+```{r libraries, message=FALSE}
+library(ggmsa)
+```
+
+Read Mustn1 protein sequences from file
+
+```{r sequence}
+protein_sequences <- "Mustang.txt"
+```
+
+Run ggmsa and plot using color coding by amino acid property
+
+```{r ggmsa}
+ggmsa(protein_sequences, start = 1, end = 82, color = "Chemistry_AA",
+      font = "helvetical", by_conservation = FALSE, 
+      char_width = 0.5, seq_name = T, border = NA, consensus_views = FALSE, disagreement = FALSE, show.legend = FALSE)
+```
+
+The alignment and color-coding was used to remake the figure using Inkscape
+
+<details><summary>Session Information:</summary>
+```{r session}
+sessionInfo()
+```
+</details>
